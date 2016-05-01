@@ -1,0 +1,4 @@
+
+
+class disk_structure:
+    def __init__(self, *args, **kwargs):
