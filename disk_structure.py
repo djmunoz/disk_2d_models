@@ -168,8 +168,8 @@ class disk(object):
         rvals = self.evaluate_radial_zones(Rin,Rout,Nvals,scale)
         Omega_sq = self.Mcentral/rvals**3 * (1 + 3 * self.quadrupole_correction/rvals**2)
         
-        return rvals, Omega_sq + self.evaluate_pressure_gradient(Rin,Rout,Nvals,scale=scale)[1] / \
-            self.evaluate_sigma(Rin,Rout,Nvals,scale=scale)[1]/ rvals
+        return rvals, np.sqrt(Omega_sq + self.evaluate_pressure_gradient(Rin,Rout,Nvals,scale=scale)[1] / \
+            self.evaluate_sigma(Rin,Rout,Nvals,scale=scale)[1]/ rvals)
 
     def evaluate_radial_velocity(self,Rin,Rout,Nvals=1000,scale='log'):
         return self.evaluate_radial_velocity_viscous(Rin,Rout,Nvals,scale=scale)
@@ -271,7 +271,7 @@ class disk_mesh(disk):
             R,phi = np.meshgrid(rvals,phivals)
             
             if (self.mesh_alignment == "interleaved"):
-                phi[:-1,2*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2] = phi[:-1,2*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2] + 0.5*np.diff(phi[:,2*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2],axis=0)
+                phi[:-1,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2] = phi[:-1,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2] + 0.5*np.diff(phi[:,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2],axis=0)
                 
             phi = phi[:-1,:]
             R = R[:-1,:]
@@ -388,8 +388,8 @@ class snapshot():
         #or buffer cells (only if there are boundaries at the interface)
         ind_inner = (R < (disk_mesh.Rin - disk_mesh.N_inner_boundary_rings * disk_mesh.deltaRin))
         ind_outer = (R > (disk_mesh.Rout + disk_mesh.N_outer_boundary_rings * disk_mesh.deltaRout))
-        if (disk_mesh.N_inner_boundary_rings > 0):  ids[ind_inner] = -3
-        if (disk_mesh.N_outer_boundary_rings > 0):  ids[ind_outer] = -3
+        if (disk_mesh.N_inner_boundary_rings > 0):  ids[ind_inner] = range(-3,-3-len(ids[ind_inner]),-1)
+        if (disk_mesh.N_outer_boundary_rings > 0):  ids[ind_outer] = range(-3,-3-len(ids[ind_outer]),-1)
 
         dens[ind_inner+ind_outer] = disk.sigma_cut
         vr[dens <= disk.sigma_cut] = 0
