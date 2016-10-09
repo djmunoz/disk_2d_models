@@ -264,6 +264,7 @@ class disk_mesh(disk):
             rvals = np.logspace(np.log10(self.Rin),np.log10(self.Rout),self.NR+1)
             rvals = rvals[:-1] + 0.5 * np.diff(rvals)
             self.deltaRin,self.deltaRout = rvals[1]-rvals[0],rvals[-1]-rvals[-2]
+            # Add cells outside the boundary
             for kk in range(self.N_inner_boundary_rings): rvals=np.append(rvals[0]-self.deltaRin, rvals)
             for kk in range(self.N_outer_boundary_rings): rvals=np.append(rvals,rvals[-1]+self.deltaRout)
 
@@ -271,7 +272,7 @@ class disk_mesh(disk):
             R,phi = np.meshgrid(rvals,phivals)
             
             if (self.mesh_alignment == "interleaved"):
-                phi[:-1,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2] = phi[:-1,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2] + 0.5*np.diff(phi[:,3*self.N_inner_boundary_rings:-3*self.N_outer_boundary_rings:2],axis=0)
+                phi[:-1,4*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2] = phi[:-1,4*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2] + 0.5*np.diff(phi[:,4*self.N_inner_boundary_rings:-2*self.N_outer_boundary_rings:2],axis=0)
                 
             phi = phi[:-1,:]
             R = R[:-1,:]
