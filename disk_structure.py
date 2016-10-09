@@ -440,6 +440,12 @@ class snapshot():
         ws.closefile(f)
         
 
+    def summary(self,disk,disk_mesh):
+
+        print("Created snapshot with NR=%i, Nphi=%i and a total of Ncells=%i" \
+              % (disk_mesh.NR,disk_mesh.Nphi,self.pos.shape[0]))
+        print("SUMMARY:\n")
+        print("\t Rin=%f Rout=%f" %( disk_mesh.Rin, disk_mesh.Rout))
 
 if __name__=="__main__":
 
