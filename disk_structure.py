@@ -231,6 +231,7 @@ class disk_mesh(disk):
         self.N_outer_boundary_rings = kwargs.get("N_outer_boundary_rings") 
         self.fill_box = kwargs.get("fill_box")
         self.fill_center = kwargs.get("fill_center")
+        self.fill_box_Nmax = kwargs.get("fill_box_Nmax")
         
         # set default values
         if (self.mesh_type == None):
@@ -254,7 +255,9 @@ class disk_mesh(disk):
         if (self.fill_box == None):
             self.fill_box = False
         if (self.fill_center == None):
-            self.fill_center = False   
+            self.fill_center = False
+        if (self.fill_box_Nmax is None):
+            self.fill_box_Nmax = 128
 
     def create(self,*args,**kwargs):
 
@@ -287,6 +290,7 @@ class disk_mesh(disk):
 
                 extent = 0.5 * self.BoxSize - 2*self.deltaRout
                 interval = 4*self.deltaRout
+                print self.Boxsize/interval
                 xback,yback = np.meshgrid(np.arange(-extent + 0.5 * interval, extent,interval),
                                           np.arange(-extent + 0.5 * interval, extent,interval))
                 xback,yback = xback.flatten(),yback.flatten()
@@ -444,7 +448,7 @@ class snapshot():
 
         print("Created snapshot with NR=%i, Nphi=%i and a total of Ncells=%i" \
               % (disk_mesh.NR,disk_mesh.Nphi,self.pos.shape[0]))
-        print("SUMMARY:\n")
+        print("SUMMARY:")
         print("\t Rin=%f Rout=%f" %( disk_mesh.Rin, disk_mesh.Rout))
 
 if __name__=="__main__":
