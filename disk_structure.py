@@ -290,7 +290,7 @@ class disk_mesh(disk):
 
                 extent = 0.5 * self.BoxSize - 2*self.deltaRout
                 interval = 4*self.deltaRout
-                print self.Boxsize/interval
+                print self.BoxSize/interval
                 xback,yback = np.meshgrid(np.arange(-extent + 0.5 * interval, extent,interval),
                                           np.arange(-extent + 0.5 * interval, extent,interval))
                 xback,yback = xback.flatten(),yback.flatten()
