@@ -257,7 +257,7 @@ class disk_mesh(disk):
         if (self.fill_center == None):
             self.fill_center = False
         if (self.fill_box_Nmax is None):
-            self.fill_box_Nmax = 128
+            self.fill_box_Nmax = 64
 
     def create(self,*args,**kwargs):
 
@@ -290,7 +290,8 @@ class disk_mesh(disk):
 
                 extent = 0.5 * self.BoxSize - 2*self.deltaRout
                 interval = 4*self.deltaRout
-                print self.BoxSize/interval
+                if (self.BoxSize/interval > self.fill_box_Nmax):
+                    interval = self.fill_box_Nmax
                 xback,yback = np.meshgrid(np.arange(-extent + 0.5 * interval, extent,interval),
                                           np.arange(-extent + 0.5 * interval, extent,interval))
                 xback,yback = xback.flatten(),yback.flatten()
