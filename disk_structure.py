@@ -7,6 +7,9 @@ from scipy.interpolate import interp1d
 def powerlaw_sigma(R,sigma0,p,R0):
     return sigma0*(R/R0)**(-p)
 
+def powerlaw_zerotorque_sigma(R,sigma0,p,R0,Rin):
+    return sigma0*(R/R0)**(-p) * (1 - np.sqrt(Rin/R))
+
 def similarity_sigma(R,sigma0,gamma,Rc):
     return sigma0*(R/Rc)**(-gamma) * np.exp(-(R/Rc)**(2.0-gamma))
 
@@ -17,6 +20,9 @@ def powerlaw_cavity_sigma(R,sigma0,p,xi,R_cav):
 def soundspeed(R,csnd0,l,R0):
     return csnd0 * (R/R0)**(-l*0.5)
 
+def gap_profile(R,center,width,depth,steepness):
+    x = np.abs(R - center)
+    return 1 -  (1 - depth)/(1 + (x/width)**steepness * np.exp(-(2.5 * width /x)**2))
 
 class powerlaw_disk(object):
     def __init__(self, *args, **kwargs):
@@ -27,16 +33,38 @@ class powerlaw_disk(object):
 
 
         #set default values
-        if (self.sigma0 == None):
+        if (self.sigma0 is None):
             self.sigma0 = 1.0
-        if (self.p == None):
+        if (self.p is None):
             self.p = 1.0
-        if (self.R0 == None):
+        if (self.R0 is None):
             self.R0 = 1.0
 
     def evaluate(self,R):
         return powerlaw_sigma(R,self.sigma0,self.p,self.R0)
 
+class powerlaw_zerotorque_disk(object):
+    def __init__(self, *args, **kwargs):
+
+        self.sigma0 = kwargs.get("sigma0")
+        self.p = kwargs.get("p")
+        self.R0 = kwargs.get("R0")
+        self.R0 = kwargs.get("Rin")
+
+
+        #set default values
+        if (self.sigma0 is None):
+            self.sigma0 = 1.0
+        if (self.p is None):
+            self.p = 1.0
+        if (self.R0 is None):
+            self.R0 = 1.0
+        if (self.Rin is None):
+            self.Rin = self.R0
+
+    def evaluate(self,R):
+        return powerlaw_zerotorque_sigma(R,self.sigma0,self.p,self.R0,self.Rin)
+    
 class similarity_disk(object):
     def __init__(self, *args, **kwargs):
         self.sigma0 = kwargs.get("sigma0")
@@ -44,11 +72,11 @@ class similarity_disk(object):
         self.Rc = kwargs.get("Rc")
 
         #set default values
-        if (self.sigma0 == None):
+        if (self.sigma0 is None):
             self.sigma0 = 1.0
-        if (self.gamma == None):
+        if (self.gamma is None):
             self.gamma = 1.0
-        if (self.Rc == None):
+        if (self.Rc is None):
             self.Rc = 1.0
 
     def evaluate(self,R):
@@ -64,13 +92,13 @@ class powerlaw_cavity_disk(object):
 
 
         #set default values
-        if (self.sigma0 == None):
+        if (self.sigma0 is None):
             self.sigma0 = 1.0
-        if (self.p == None):
+        if (self.p is None):
             self.p = 1.0
-        if (self.R_cav == None):
+        if (self.R_cav is None):
             self.R_cav = 5.0
-        if (self.xi == None):
+        if (self.xi is None):
             self.xi = 4.0
 
     def evaluate(self,R):
@@ -99,48 +127,79 @@ class disk(object):
         self.Mcentral = kwargs.get("Mcentral")
         self.quadrupole_correction =  kwargs.get("quadrupole_correction")
 
-        
+        #corrections to density profile by a gap
+        self.add_gap = kwargs.get("add_gap")
+        if (self.add_gap is True):
+            self.gap_center = kwargs.get("gap_center")
+            self.gap_width = kwargs.get("gap_width")
+            self.gap_depth = kwargs.get("gap_depth")
+            self.gap_steep = kwargs.get("gap_steep")
 
-        #set defaults 
-        if (self.sigma_type == None):
+
+
+            
+        #set defaults ###############################
+        if (self.sigma_type is None):
             self.sigma_type="powerlaw"
-        if (self.l == None):
+        if (self.l is None):
             self.l = 1.0
-        if (self.csnd0 == None):
+        if (self.csnd0 is None):
             self.csnd0 = 0.05
-        if (self.adiabatic_gamma == None):
+        if (self.adiabatic_gamma is None):
             self.adiabatic_gamma = 7.0/5
-        if (self.effective_gamma == None):
+        if (self.effective_gamma is None):
             self.effective_gamma = 1.0
-        if (self.alphacoeff == None):
+        if (self.alphacoeff is None):
             self.alphacoeff = 0.01
-        if (self.Mcentral == None):
+        if (self.Mcentral is None):
             self.Mcentral = 1.0
-        if (self.quadrupole_correction == None):
+        if (self.quadrupole_correction is None):
             self.quadrupole_correction = 0
             
         if (self.sigma_type == "powerlaw"):
             self.sigma_disk = powerlaw_disk(**kwargs)
-            if (self.csndR0 == None):
+            if (self.csndR0 is None):
+                self.csndR0 = self.sigma_disk.R0
+
+        if (self.sigma_type == "powerlaw_zerotorque"):
+            self.sigma_disk = powerlaw_zerotorque_disk(**kwargs)
+            if (self.csndR0 is None):
                 self.csndR0 = self.sigma_disk.R0
 
         if (self.sigma_type == "similarity"):
             self.sigma_disk = similarity_disk(**kwargs)
-            if (self.csndR0 == None):
+            if (self.csndR0 is None):
                 self.csndR0 = self.sigma_disk.Rc
 
         if (self.sigma_type == "powerlaw_cavity"):
             self.sigma_disk = powerlaw_cavity_disk(**kwargs)
-            if (self.csndR0 == None):
+            if (self.csndR0 is None):
                 self.csndR0 = self.sigma_disk.R_cav
 
-        if (self.sigma_cut == None):
+        if (self.sigma_cut is None):
             self.sigma_cut = self.sigma_disk.sigma0 * 1e-7
-        
+
+        if (self.add_gap is None):
+            self.add_gap = False
+        if (self.add_gap is True):
+            if (self.gap_center is None):
+                self.gap_center = 1.0
+            if (self.gap_width is None):
+                self.gap_width = 0.1
+            if (self.gap_depth is None):
+                self.gap_depth = 0.01
+            if (self.gap_steep is None):
+                self.gap_steep = 4
+
             
     def evaluate_sigma(self,Rin,Rout,Nvals=1000,scale='log'):
         rvals = self.evaluate_radial_zones(Rin,Rout,Nvals,scale)
         sigma = self.sigma_disk.evaluate(rvals)
+
+        if (self.add_gap):
+            print self.gap_center,self.gap_width,self.gap_depth,self.gap_steep
+            sigma = sigma * gap_profile(rvals,self.gap_center,self.gap_width,self.gap_depth,self.gap_steep)
+            
         sigma[sigma < self.sigma_cut] = self.sigma_cut
         return rvals,sigma
     
@@ -149,8 +208,8 @@ class disk(object):
         return rvals,soundspeed(rvals,self.csnd0,self.l,self.csndR0)
 
     def evaluate_pressure(self,Rin,Rout,Nvals=1000,scale='log'):
-        rvals = self.evaluate_radial_zones(Rin,Rout,Nvals,scale)
-        return rvals, self.evaluate_sigma(Rin,Rout,Nvals,scale=scale)[1]**(self.effective_gamma) * \
+        rvals,sigma = self.evaluate_sigma(Rin,Rout,Nvals,scale=scale)
+        return rvals, sigma**(self.effective_gamma) * \
             self.evaluate_soundspeed(Rin,Rout,Nvals,scale=scale)[1]**2
 
     def evaluate_viscosity(self,Rin,Rout,Nvals=1000,scale='log'):
@@ -234,27 +293,27 @@ class disk_mesh(disk):
         self.fill_box_Nmax = kwargs.get("fill_box_Nmax")
         
         # set default values
-        if (self.mesh_type == None):
+        if (self.mesh_type is None):
             self.mesh_type="polar"
-        if (self.Rin == None):
+        if (self.Rin is None):
             self.Rin = 1
-        if (self.Rout == None):
+        if (self.Rout is None):
             self.Rout = 10
-        if (self.NR == None):
+        if (self.NR is None):
             self.NR = 800
-        if (self.Nphi == None):
+        if (self.Nphi is None):
             self.Nphi = 600
-        if (self.N_inner_boundary_rings == None):
+        if (self.N_inner_boundary_rings is None):
             self.N_inner_boundary_rings = 1
-        if (self.N_outer_boundary_rings == None):
+        if (self.N_outer_boundary_rings is None):
             self.N_outer_boundary_rings = 1            
             
-        if (self.BoxSize == None):
+        if (self.BoxSize is None):
             self.BoxSize = 1.2 * 2* self.Rout
             
-        if (self.fill_box == None):
+        if (self.fill_box is None):
             self.fill_box = False
-        if (self.fill_center == None):
+        if (self.fill_center is None):
             self.fill_center = False
         if (self.fill_box_Nmax is None):
             self.fill_box_Nmax = 64
