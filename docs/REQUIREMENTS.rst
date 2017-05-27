@@ -4,7 +4,7 @@ Installation requirements for using AREPO with OPEN-MPI and HDF5
 
 
 Requirements
------------
+-----
 
 C compiler
 ~~~~~
