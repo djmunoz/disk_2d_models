@@ -28,3 +28,8 @@ HDF5
    
 Other headers
 ~~~~~
+
+
+
+Compiling AREPO
+-----
